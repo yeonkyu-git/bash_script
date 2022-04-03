@@ -1,18 +1,15 @@
 #!/bin/bash 
 
-set -exuo pipefail   # 개발할 때만 사용!
-
+set -exuo pipefail
 
 ## 1. 변수 설정
 HOST=$(/bin/hostname)
 LOG="/tmp/backup.log"
 PUSH="/root/monitor/tel_send.sh"
 DATE=$(/bin/date +%Y.%m.%d)
-BAK_LIST="/etc/my.cnf.d" ### 백업할 디렉토리/파일을 지정 
+BAK_LIST="/etc/nginx /usr/share/nginx/html/www"  ### 백업할 디렉토리/파일을 지정 
 BAK_PATH="/mnt/BACKUP/${HOST}"  ### 백업 디렉토리
 BAK_FILE="${BAK_PATH}/${DATE}_${HOST}.tgz"  ### 파일명 
-DB_BAK_PATH="/root/BACKUP/xtrabackup_backupfiles"    # DB 백업 디렉토리 Path 
-DB_BAK_FILE="${BAK_PATH}/${DATE}_${HOST}_DB.tgz"  # DB 백업 파일 명 
 
 ## 2. 스토리지에 마운트
 /bin/mount /mnt
@@ -39,40 +36,13 @@ fi
   /bin/echo 
 
   ## 5. 백업 
-  # DB Dump 
-  /bin/mariabackup \
-    --backup \
-    --no-lock \
-    --user=root \
-    --password=1234 \
-    --target-dir=${DB_BAK_PATH}
-
-  # DB apply logs   백업할 때 업데이트된 내용 백업 
-  /bin/mariabackup \
-    --prepare \
-    --user=root \
-    --password=1234 \
-    --target-dir=${DB_BAK_PATH}
-
   # p : 퍼미션 유지 P: 절대경로 유지 
   /bin/tar czpPf "${BAK_FILE}" ${BAK_LIST}
-
-  # DB 백업 디렉토리 압축 
-  /bin/tar czpPf "${DB_BAK_FILE}" ${DB_BAK_PATH}
-  
 
   ## 백업 파일 정보 
   NAME="$(/bin/ls -al "${BAK_FILE}" | awk '{print $9}')"
   SIZE="$(/bin/ls -al "${BAK_FILE}" | awk '{print $5}')"
   /bin/echo "=== 백업 파일 정보 : "
-  /bin/echo " | 파일명 : ${NAME} "
-  /bin/echo " | 파일크기 : ${SIZE}Byte "
-  /bin/echo
-
-  ## DB 백업 파일 정보 
-  NAME="$(/bin/ls -al "${DB_BAK_FILE}" | awk '{print $9}')"
-  SIZE="$(/bin/ls -al "${DB_BAK_FILE}" | awk '{print $5}')"
-  /bin/echo "=== DB 백업 파일 정보 : "
   /bin/echo " | 파일명 : ${NAME} "
   /bin/echo " | 파일크기 : ${SIZE}Byte "
   /bin/echo
@@ -93,4 +63,4 @@ fi
 "${PUSH}" "${HOST}" "$(/bin/cat "${LOG}")"
 
 ## 로그파일 삭제 
-/bin/rm -rf "${LOG}" "${DB_BAK_PATH}"
+/bin/rm -f "${LOG}"
