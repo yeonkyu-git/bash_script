@@ -1,2 +1,2 @@
-./FileSystem/sendingTelegram.sh
-./FileSystem/sendTelToUser.sh
+FileSystem/sendingTelegram.sh
+FileSystem/sendTelToUser.sh
